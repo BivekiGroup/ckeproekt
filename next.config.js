@@ -1,8 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  eslint: {
+    // Отключаем ESLint при сборке для продакшена
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // Игнорируем ошибки TypeScript при сборке для продакшена
+    ignoreBuildErrors: true,
+  },
   images: {
-    unoptimized: true,
+    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
 };
 

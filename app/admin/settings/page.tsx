@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Save, Plus, Edit, Trash2, Settings as SettingsIcon, Palette, Globe } from 'lucide-react';
-import { NEWS_CATEGORIES } from '@/lib/types';
+import { NEWS_CATEGORIES, NewsCategory, NewsCategoryInfo } from '@/lib/types';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('categories');
@@ -44,8 +44,9 @@ export default function SettingsPage() {
   const handleAddCategory = () => {
     if (!newCategory.name.trim()) return;
 
-    const category = {
-      id: newCategory.name.toLowerCase().replace(/\s+/g, '-'),
+    const categoryId = newCategory.name.toLowerCase().replace(/\s+/g, '-') as NewsCategory;
+    const category: NewsCategoryInfo = {
+      id: categoryId,
       name: newCategory.name,
       description: newCategory.description,
       color: newCategory.color

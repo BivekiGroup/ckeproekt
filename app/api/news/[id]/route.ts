@@ -5,11 +5,12 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const news = await prisma.news.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: { author: true }
     });
 
@@ -22,7 +23,7 @@ export async function GET(
 
     // Увеличиваем счетчик просмотров
     await prisma.news.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: { views: { increment: 1 } }
     });
 
@@ -47,9 +48,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const body = await request.json();
     
     // Здесь должна быть проверка авторизации
@@ -78,7 +80,7 @@ export async function PUT(
     }
 
     const news = await prisma.news.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: updateData,
       include: { author: true }
     });
@@ -104,9 +106,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     // Здесь должна быть проверка авторизации
     // const session = await getServerSession(authOptions);
     // if (!session) {
@@ -114,7 +117,7 @@ export async function DELETE(
     // }
 
     await prisma.news.delete({
-      where: { id: params.id }
+      where: { id: resolvedParams.id }
     });
 
     return NextResponse.json({

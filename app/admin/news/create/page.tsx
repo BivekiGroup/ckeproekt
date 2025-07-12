@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Eye, Upload, X } from 'lucide-react';
+import { ArrowLeft, Save, X } from 'lucide-react';
 import Link from 'next/link';
 import TextEditor from '@/app/admin/components/TextEditor';
 import ImageUpload from '@/app/admin/components/ImageUpload';
@@ -96,11 +96,29 @@ export default function CreateNewsPage() {
   };
 
   const handleSaveAsDraft = async () => {
-    setFormData(prev => ({ ...prev, published: false }));
-    // Используем setTimeout чтобы дождаться обновления состояния
-    setTimeout(() => {
-      handleSubmit(new Event('submit') as any);
-    }, 0);
+    const draftData = { ...formData, published: false };
+    setFormData(draftData);
+    
+    // Сохраняем как черновик
+    try {
+      const response = await fetch('/api/news', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...draftData,
+          publishedAt: new Date(draftData.publishedAt).toISOString()
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        router.push('/admin/news');
+      }
+    } catch (error) {
+      console.error('Error saving draft:', error);
+    }
   };
 
   return (

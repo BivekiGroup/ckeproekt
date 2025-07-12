@@ -46,7 +46,7 @@ async function getRelatedNews(category: string, currentSlug: string) {
     
     const data = await response.json();
     if (data.success) {
-      return data.data.news.filter((item: any) => item.slug !== currentSlug);
+      return data.data.news.filter((item: { slug: string }) => item.slug !== currentSlug);
     }
     
     return [];
@@ -218,12 +218,12 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
                 Похожие новости
               </h2>
               <p className="text-xl text-gray-400">
-                Другие материалы из категории "{categoryInfo?.name}"
+                Другие материалы из категории &quot;{categoryInfo?.name}&quot;
               </p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {relatedNews.map((relatedNewsItem: any, index: number) => (
+              {relatedNews.map((relatedNewsItem: any) => (
                 <Link
                   key={relatedNewsItem.id}
                   href={`/news/${relatedNewsItem.slug}`}
