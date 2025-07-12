@@ -9,6 +9,7 @@ import WhyUs from './components/WhyUs';
 import WorkFlow from './components/WorkFlow';
 import Certificates from './components/Certificates';
 import Services from './components/Services';
+import NewsBlock from './components/NewsBlock';
 import Contacts from './components/Contacts';
 import ContactForm from './components/ContactForm';
 import Footer from './components/Footer';
@@ -76,6 +77,12 @@ export default function Home() {
               <WhyUs />
               <WorkFlow />
               <Certificates />
+              <NewsBlock 
+                maxNews={4} 
+                showFeatured={true}
+                title="Последние новости"
+                subtitle="Следите за важными событиями, достижениями и обновлениями нашей компании"
+              />
               <Contacts selectedCity={selectedCity} />
               <ContactForm />
             </main>

@@ -28,6 +28,7 @@ const navigation = [
   { name: 'Как мы работаем', href: '#workflow' },
   { name: 'Сертификаты', href: '#certificates' },
   { name: 'Услуги', href: '#services' },
+  { name: 'Новости', href: '/news' },
   { name: 'Контакты', href: '#contacts' },
 ];
 
