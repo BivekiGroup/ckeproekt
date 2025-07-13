@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const slug = searchParams.get('slug');
     const featured = searchParams.get('featured') === 'true';
-    const published = searchParams.get('published') !== 'false';
+    const publishedParam = searchParams.get('published');
+    const published = publishedParam === 'all' ? undefined : publishedParam !== 'false';
     const sortBy = searchParams.get('sortBy') || 'publishedAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
 

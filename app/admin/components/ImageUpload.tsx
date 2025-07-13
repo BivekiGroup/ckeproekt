@@ -51,21 +51,30 @@ export default function ImageUpload({
     setError('');
 
     try {
-      // В реальном приложении здесь будет загрузка на сервер
-      // Для демонстрации используем FileReader для создания data URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        onChange(result);
-        setIsUploading(false);
-      };
-      reader.onerror = () => {
-        setError('Ошибка при загрузке файла');
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'images');
+      
+      // Если есть старое изображение, передаем его URL для удаления
+      if (value && value.startsWith('http')) {
+        formData.append('oldUrl', value);
+      }
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка при загрузке файла');
+      }
+
+      onChange(result.data.publicUrl);
+      setIsUploading(false);
     } catch (error) {
-      setError('Ошибка при загрузке файла');
+      setError(error instanceof Error ? error.message : 'Ошибка при загрузке файла');
       setIsUploading(false);
     }
   };
@@ -97,7 +106,19 @@ export default function ImageUpload({
     setDragActive(false);
   };
 
-  const handleRemove = () => {
+  const handleRemove = async () => {
+    try {
+      // Если файл находится в S3, удаляем его оттуда
+      if (value && value.startsWith('http')) {
+        await fetch(`/api/upload?url=${encodeURIComponent(value)}`, {
+          method: 'DELETE',
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка при удалении файла:', error);
+      // Не показываем ошибку пользователю, так как файл может быть удален из UI
+    }
+    
     onRemove();
     setError('');
     if (fileInputRef.current) {

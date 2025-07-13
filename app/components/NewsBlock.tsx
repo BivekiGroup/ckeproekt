@@ -21,11 +21,13 @@ export default function NewsBlock({
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalNews, setTotalNews] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadNews = async () => {
       try {
         setLoading(true);
+        setError(null);
         
         const params = new URLSearchParams();
         params.append('page', '1');
@@ -41,16 +43,22 @@ export default function NewsBlock({
         }
         
         const response = await fetch(`/api/news?${params}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         if (data.success) {
           setNews(data.data.news);
           setTotalNews(data.data.pagination.total);
         } else {
-          console.error('Error loading news:', data.error);
+          throw new Error(data.error || 'Failed to load news');
         }
       } catch (error) {
         console.error('Error loading news:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load news');
       } finally {
         setLoading(false);
       }
@@ -86,8 +94,40 @@ export default function NewsBlock({
     );
   }
 
+  if (error) {
+    return (
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">
+              <svg className="h-12 w-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-lg font-semibold">Ошибка при загрузке новостей</p>
+              <p className="text-sm text-gray-600 mt-2">{error}</p>
+            </div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Обновить страницу
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (displayNews.length === 0) {
-    return null;
+    return (
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-gray-600">Новости не найдены</p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Building, FileText, Settings, LogOut, Menu, X } from 'lucide-react';
+import S3Status from './components/S3Status';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -69,17 +70,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-gray-900 to-gray-800 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex items-center justify-between h-16 px-6 border-b">
+        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-700">
           <Link href="/admin" className="flex items-center space-x-2">
-            <Building className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">Admin Panel</span>
+            <Building className="h-8 w-8 text-blue-400" />
+            <span className="text-xl font-bold text-white">CKE Admin</span>
           </Link>
           <button
             onClick={() => setIsSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-md hover:bg-gray-100"
+            className="lg:hidden p-2 rounded-md hover:bg-gray-700 text-gray-300 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
@@ -92,10 +93,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center px-6 py-3 text-sm font-medium transition-colors ${
+                className={`flex items-center px-6 py-3 text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-blue-600 text-white border-r-4 border-blue-400 shadow-lg'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 }`}
                 onClick={() => setIsSidebarOpen(false)}
               >
@@ -106,10 +107,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           })}
         </nav>
 
-        <div className="absolute bottom-0 w-full p-6 border-t">
+        <div className="absolute bottom-0 w-full p-6 border-t border-gray-700 space-y-4">
+          <div className="bg-gray-800 rounded-lg p-3">
+            <S3Status />
+          </div>
           <button
             onClick={handleLogout}
-            className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
+            className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-900 hover:bg-opacity-20 rounded-md transition-colors"
           >
             <LogOut className="mr-3 h-5 w-5" />
             Выйти
@@ -120,17 +124,22 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main content */}
       <div className="lg:ml-64">
         {/* Top bar */}
-        <div className="bg-white shadow-sm border-b">
+        <div className="bg-white shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-md hover:bg-gray-100"
+              className="lg:hidden p-2 rounded-md hover:bg-gray-100 text-gray-600"
             >
               <Menu className="h-5 w-5" />
             </button>
             
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">Добро пожаловать, admin</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">A</span>
+                </div>
+                <span className="text-sm text-gray-700 font-medium">Добро пожаловать, admin</span>
+              </div>
             </div>
           </div>
         </div>
@@ -166,11 +175,15 @@ function LoginForm({ onLogin }: { onLogin: (username: string, password: string) 
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-xl p-8 border border-gray-100">
         <div className="text-center mb-8">
-          <Building className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900">Административная панель</h1>
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <Building className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            CKE Admin Panel
+          </h1>
           <p className="text-gray-600 mt-2">Войдите в систему управления</p>
         </div>
 

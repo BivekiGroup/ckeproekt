@@ -15,6 +15,12 @@ const nextConfig = {
         protocol: 'https',
         hostname: '**',
       },
+      {
+        protocol: 'https',
+        hostname: 's3.twcstorage.ru',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
