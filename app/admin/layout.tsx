@@ -18,28 +18,43 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
 
   useEffect(() => {
-    // Проверяем авторизацию
-    const adminAuth = localStorage.getItem('adminAuth');
-    if (adminAuth) {
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/admin/me', { cache: 'no-store' });
+        setIsAuthenticated(res.ok);
+      } catch (e) {
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkAuth();
   }, []);
 
-  const handleLogin = (username: string, password: string) => {
-    // Простая проверка (в реальном проекте должна быть серверная авторизация)
-    if (username === 'admin' && password === 'admin123') {
-      localStorage.setItem('adminAuth', JSON.stringify({ username, role: 'admin' }));
-      setIsAuthenticated(true);
-      return true;
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: email, password })
+      });
+      if (res.ok) {
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
     }
-    return false;
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminAuth');
-    setIsAuthenticated(false);
-    router.push('/admin');
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } finally {
+      setIsAuthenticated(false);
+      router.push('/admin');
+    }
   };
 
   const navigation = [
@@ -154,8 +169,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 }
 
 // Компонент формы входа
-function LoginForm({ onLogin }: { onLogin: (username: string, password: string) => boolean }) {
-  const [username, setUsername] = useState('');
+function LoginForm({ onLogin }: { onLogin: (email: string, password: string) => Promise<boolean> }) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -163,15 +178,14 @@ function LoginForm({ onLogin }: { onLogin: (username: string, password: string) 
     e.preventDefault();
     setError('');
     
-    if (!username || !password) {
+    if (!email || !password) {
       setError('Заполните все поля');
       return;
     }
 
-    const success = onLogin(username, password);
-    if (!success) {
-      setError('Неверный логин или пароль');
-    }
+    onLogin(email, password).then((success) => {
+      if (!success) setError('Неверный логин или пароль');
+    });
   };
 
   return (
@@ -189,16 +203,16 @@ function LoginForm({ onLogin }: { onLogin: (username: string, password: string) 
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-              Логин
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              Email или логин
             </label>
             <input
-              id="username"
+              id="email"
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Введите логин"
+              placeholder="Введите email или логин"
             />
           </div>
 

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Eye, Upload, X, Trash2 } from 'lucide-react';
-import { NEWS_CATEGORIES, NewsFormData, NewsCategory } from '@/lib/types';
+import { NewsFormData, NewsCategory } from '@/lib/types';
 // import { getNewsById } from '@/lib/news-data';
 
 interface EditNewsPageProps {
@@ -35,8 +35,24 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
 
   const [errors, setErrors] = useState<Partial<NewsFormData>>({});
   const [tagInput, setTagInput] = useState('');
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([
+    { id: 'company', name: 'Новости компании' },
+    { id: 'promotions', name: 'Акции' },
+    { id: 'other', name: 'Другое' }
+  ]);
 
   useEffect(() => {
+    // подгружаем категории
+    (async () => {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' });
+        const data = await res.json();
+        if (res.ok && data?.data?.length) {
+          setCategories(data.data.map((c: any) => ({ id: c.slug, name: c.name })));
+        }
+      } catch {}
+    })();
+
     const loadNews = async () => {
       const resolvedParams = await params;
       const id = resolvedParams.id;
@@ -300,7 +316,7 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
                 onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as NewsCategory }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                {NEWS_CATEGORIES.map((category) => (
+                {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
@@ -506,10 +522,8 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
                 </h4>
                 
                 <div className="flex items-center space-x-2 mb-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium text-white ${
-                    NEWS_CATEGORIES.find(cat => cat.id === formData.category)?.color || 'bg-gray-500'
-                  }`}>
-                    {NEWS_CATEGORIES.find(cat => cat.id === formData.category)?.name}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium text-white bg-gray-500`}>
+                    {categories.find(cat => cat.id === formData.category)?.name || 'Категория'}
                   </span>
                   {formData.featured && (
                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">

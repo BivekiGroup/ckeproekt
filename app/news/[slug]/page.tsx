@@ -2,7 +2,7 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { NEWS_CATEGORIES } from '@/lib/types';
+// категории будем подтягивать с API
 
 interface NewsDetailPageProps {
   params: Promise<{
@@ -72,11 +72,18 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
     });
   };
 
-  const getCategoryInfo = (categoryId: string) => {
-    return NEWS_CATEGORIES.find(cat => cat.id === categoryId);
-  };
+  async function getCategoryInfo(categoryId: string) {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/categories`, { cache: 'no-store' });
+      const data = await response.json();
+      if (response.ok && data?.data?.length) {
+        return data.data.find((c: any) => c.slug === categoryId);
+      }
+    } catch {}
+    return null;
+  }
 
-  const categoryInfo = getCategoryInfo(news.category);
+  const categoryInfo = await getCategoryInfo(news.category);
 
   // Получаем связанные новости (из той же категории, исключая текущую)
   const relatedNews = await getRelatedNews(news.category, news.slug);

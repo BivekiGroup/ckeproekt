@@ -33,13 +33,14 @@ interface NewsCategory {
   color: string;
 }
 
-const NEWS_CATEGORIES: NewsCategory[] = [
+const DEFAULT_CATEGORIES: NewsCategory[] = [
   { id: 'company', name: 'Новости компании', slug: 'company', color: 'bg-blue-500' },
   { id: 'promotions', name: 'Акции', slug: 'promotions', color: 'bg-green-500' },
   { id: 'other', name: 'Другое', slug: 'other', color: 'bg-purple-500' }
 ];
 
 export default function AdminNewsPage() {
+  const [categories, setCategories] = useState<NewsCategory[]>(DEFAULT_CATEGORIES);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,6 +52,18 @@ export default function AdminNewsPage() {
   useEffect(() => {
     loadNews();
   }, [searchQuery, selectedCategory, selectedStatus, sortBy, sortOrder]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' });
+        const data = await res.json();
+        if (res.ok && data?.data?.length) {
+          setCategories(data.data.map((c: any) => ({ id: c.slug, name: c.name, slug: c.slug, color: c.color || 'bg-blue-500' })));
+        }
+      } catch {}
+    })();
+  }, []);
 
   const loadNews = async () => {
     try {
@@ -102,9 +115,7 @@ export default function AdminNewsPage() {
     });
   };
 
-  const getCategoryInfo = (categoryId: string) => {
-    return NEWS_CATEGORIES.find(cat => cat.id === categoryId);
-  };
+  const getCategoryInfo = (categoryId: string) => categories.find(cat => cat.id === categoryId);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Вы уверены, что хотите удалить эту новость?')) {
@@ -230,7 +241,7 @@ export default function AdminNewsPage() {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">Все категории</option>
-            {NEWS_CATEGORIES.map((category) => (
+            {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
               </option>

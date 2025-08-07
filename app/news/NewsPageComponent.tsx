@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { NEWS_CATEGORIES, NewsItem } from '@/lib/types';
+import { NewsItem } from '@/lib/types';
 import { Search, Eye, ArrowRight } from 'lucide-react';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
@@ -60,8 +60,18 @@ export default function NewsPageComponent() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalNews, setTotalNews] = useState(0);
+  const [categories, setCategories] = useState<{ id: string; name: string; color: string }[]>([]);
 
   useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' });
+        const data = await res.json();
+        if (res.ok && data?.data?.length) {
+          setCategories(data.data.map((c: any) => ({ id: c.slug, name: c.name, color: c.color || 'bg-gray-500' })));
+        }
+      } catch {}
+    })();
     const loadNews = async () => {
       try {
         setLoading(true);
@@ -126,9 +136,7 @@ export default function NewsPageComponent() {
     });
   };
 
-  const getCategoryInfo = (categoryId: string) => {
-    return NEWS_CATEGORIES.find(cat => cat.id === categoryId);
-  };
+  const getCategoryInfo = (categoryId: string) => categories.find(cat => cat.id === categoryId);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -237,7 +245,7 @@ export default function NewsPageComponent() {
                       >
                         Все
                       </button>
-                      {NEWS_CATEGORIES.map((category) => (
+                      {categories.map((category) => (
                         <button
                           key={category.id}
                           onClick={() => handleCategoryChange(category.id)}

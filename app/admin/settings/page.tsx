@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Save, Plus, Edit, Trash2, Settings as SettingsIcon, Palette, Globe } from 'lucide-react';
-import { NEWS_CATEGORIES, NewsCategory, NewsCategoryInfo } from '@/lib/types';
+import React, { useEffect, useState } from 'react';
+import { Save, Plus, Edit, Trash2, Settings as SettingsIcon, Palette, Globe, Lock, Mail } from 'lucide-react';
+import { NewsCategory, NewsCategoryInfo } from '@/lib/types';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('categories');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [categories, setCategories] = useState(NEWS_CATEGORIES);
+  const [categories, setCategories] = useState<NewsCategoryInfo[]>([]);
   const [newCategory, setNewCategory] = useState({
     name: '',
     description: '',
@@ -38,27 +38,91 @@ export default function SettingsPage() {
   const tabs = [
     { id: 'categories', name: 'Категории', icon: Palette },
     { id: 'general', name: 'Общие', icon: SettingsIcon },
+    { id: 'security', name: 'Безопасность', icon: Lock },
     { id: 'seo', name: 'SEO', icon: Globe }
   ];
 
-  const handleAddCategory = () => {
+  const [security, setSecurity] = useState({
+    email: 'admin@ckeproekt.ru',
+    username: 'admin',
+    currentPassword: '',
+    newPassword: '',
+    isSaving: false,
+    message: '' as string | null,
+    error: '' as string | null,
+  });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/me', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.user) {
+          setSecurity(prev => ({ ...prev, email: data.user.email, username: data.user.username }));
+        }
+      } catch {}
+    })();
+  }, []);
+
+  // загрузка категорий из БД
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const mapped: NewsCategoryInfo[] = (data.data || []).map((c: any) => ({
+          id: c.slug as NewsCategory,
+          name: c.name,
+          description: c.description || '',
+          color: c.color || 'bg-blue-500'
+        }));
+        setCategories(mapped);
+      } catch {}
+    })();
+  }, []);
+
+  const handleAddCategory = async () => {
     if (!newCategory.name.trim()) return;
-
-    const categoryId = newCategory.name.toLowerCase().replace(/\s+/g, '-') as NewsCategory;
-    const category: NewsCategoryInfo = {
-      id: categoryId,
-      name: newCategory.name,
-      description: newCategory.description,
-      color: newCategory.color
-    };
-
-    setCategories([...categories, category]);
-    setNewCategory({ name: '', description: '', color: 'bg-blue-500' });
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCategory.name, description: newCategory.description, color: newCategory.color })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Ошибка создания категории');
+      // Преобразуем к локальному типу
+      const created: NewsCategoryInfo = {
+        id: data.data.slug as NewsCategory,
+        name: data.data.name,
+        description: data.data.description || '',
+        color: data.data.color || 'bg-blue-500'
+      };
+      setCategories(prev => [...prev, created]);
+      setNewCategory({ name: '', description: '', color: 'bg-blue-500' });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Ошибка');
+    }
   };
 
-  const handleDeleteCategory = (id: string) => {
-    if (confirm('Вы уверены, что хотите удалить эту категорию?')) {
-      setCategories(categories.filter(cat => cat.id !== id));
+  const handleDeleteCategory = async (slug: string) => {
+    if (!confirm('Вы уверены, что хотите удалить эту категорию?')) return;
+    try {
+      // нужно найти id категории по slug через /api/categories (у нас в списке нет db id),
+      // поэтому запрашиваем полный список и ищем совпадение
+      const resList = await fetch('/api/categories');
+      const list = await resList.json();
+      const match = (list.data || []).find((c: any) => c.slug === slug);
+      if (!match) throw new Error('Категория не найдена');
+
+      const res = await fetch(`/api/categories/${match.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Ошибка удаления');
+      setCategories(prev => prev.filter(cat => cat.id !== slug));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Ошибка');
     }
   };
 
@@ -66,13 +130,10 @@ export default function SettingsPage() {
     setIsSubmitting(true);
     
     try {
-      // В реальном приложении здесь будет API вызов
-      console.log('Saving settings:', { categories, generalSettings });
-      
-      // Имитация задержки
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      alert('Настройки сохранены успешно!');
+      // пока сохраняем только generalSettings (к примеру локально)
+      console.log('Saving settings:', { generalSettings });
+      await new Promise(r => setTimeout(r, 500));
+      alert('Настройки сохранены');
     } catch (error) {
       console.error('Error saving settings:', error);
       alert('Ошибка при сохранении настроек');
@@ -131,6 +192,7 @@ export default function SettingsPage() {
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Управление категориями</h3>
+                <p className="text-sm text-gray-500 mb-4">Категории синхронизируются с базой данных</p>
                 
                 {/* Add New Category */}
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
@@ -172,7 +234,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Categories List */}
+                 {/* Categories List */}
                 <div className="space-y-3">
                   {categories.map((category) => (
                     <div key={category.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -184,11 +246,9 @@ export default function SettingsPage() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded">
-                          <Edit className="h-4 w-4" />
-                        </button>
+                         {/* Редактирование можно добавить при необходимости */}
                         <button
-                          onClick={() => handleDeleteCategory(category.id)}
+                           onClick={() => handleDeleteCategory(category.id)}
                           className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -344,6 +404,89 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Security Tab */}
+          {activeTab === 'security' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Учетные данные администратора</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input
+                      type="email"
+                      value={security.email}
+                      onChange={(e) => setSecurity(prev => ({ ...prev, email: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="admin@ckeproekt.ru"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Логин</label>
+                    <input
+                      type="text"
+                      value={security.username}
+                      onChange={(e) => setSecurity(prev => ({ ...prev, username: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="admin"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Текущий пароль</label>
+                    <input
+                      type="password"
+                      value={security.currentPassword}
+                      onChange={(e) => setSecurity(prev => ({ ...prev, currentPassword: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Введите текущий пароль"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Новый пароль</label>
+                    <input
+                      type="password"
+                      value={security.newPassword}
+                      onChange={(e) => setSecurity(prev => ({ ...prev, newPassword: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Оставьте пустым, чтобы не менять"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <button
+                    disabled={security.isSaving}
+                    onClick={async () => {
+                      setSecurity(prev => ({ ...prev, isSaving: true, message: null, error: null }));
+                      try {
+                        const res = await fetch('/api/admin/credentials', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            email: security.email,
+                            username: security.username,
+                            currentPassword: security.currentPassword,
+                            newPassword: security.newPassword || undefined,
+                          })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || 'Ошибка сохранения');
+                        setSecurity(prev => ({ ...prev, message: 'Изменения сохранены', currentPassword: '', newPassword: '' }));
+                      } catch (e: any) {
+                        setSecurity(prev => ({ ...prev, error: e.message || 'Ошибка' }));
+                      } finally {
+                        setSecurity(prev => ({ ...prev, isSaving: false }));
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {security.isSaving ? 'Сохранение...' : 'Сохранить учетные данные'}
+                  </button>
+                </div>
+                {security.message && <p className="text-green-600 text-sm mt-2">{security.message}</p>}
+                {security.error && <p className="text-red-600 text-sm mt-2">{security.error}</p>}
               </div>
             </div>
           )}

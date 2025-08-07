@@ -1,17 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import Link from 'next/link';
 import TextEditor from '@/app/admin/components/TextEditor';
 import ImageUpload from '@/app/admin/components/ImageUpload';
 
-const NEWS_CATEGORIES = [
-  { id: 'company', name: 'Новости компании' },
-  { id: 'promotions', name: 'Акции' },
-  { id: 'other', name: 'Другое' }
-];
+interface UiCategory { id: string; name: string }
 
 export default function CreateNewsPage() {
   const router = useRouter();
@@ -29,6 +25,25 @@ export default function CreateNewsPage() {
     tags: [] as string[]
   });
   const [tagInput, setTagInput] = useState('');
+  const [categories, setCategories] = useState<UiCategory[]>([
+    { id: 'company', name: 'Новости компании' },
+    { id: 'promotions', name: 'Акции' },
+    { id: 'other', name: 'Другое' }
+  ]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' });
+        const data = await res.json();
+        if (res.ok && data?.data?.length) {
+          setCategories(data.data.map((c: any) => ({ id: c.slug, name: c.name })));
+          // если выбранная категория отсутствует — выставим первую
+          setFormData(prev => ({ ...prev, category: data.data[0]?.slug || prev.category }));
+        }
+      } catch {}
+    })();
+  }, []);
 
   const generateSlug = (title: string) => {
     return title
@@ -238,7 +253,7 @@ export default function CreateNewsPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               >
-                {NEWS_CATEGORIES.map((category) => (
+                {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
