@@ -2,32 +2,8 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import prisma from '@/lib/database';
 // категории будем подтягивать с API
-
-function getBaseUrl() {
-  const explicit =
-    process.env.NEXT_PUBLIC_API_URL ||
-    process.env.NEXTAUTH_URL;
-  
-  if (explicit) {
-    return explicit.replace(/\/$/, '');
-  }
-
-  const port = process.env.PORT || '3000';
-  return `http://127.0.0.1:${port}`;
-}
-
-function buildApiUrl(path: string, searchParams?: Record<string, string | undefined>) {
-  const url = new URL(path, `${getBaseUrl()}/`);
-  if (searchParams) {
-    Object.entries(searchParams).forEach(([key, value]) => {
-      if (value !== undefined) {
-        url.searchParams.set(key, value);
-      }
-    });
-  }
-  return url.toString();
-}
 
 interface NewsDetailPageProps {
   params: Promise<{
@@ -35,25 +11,35 @@ interface NewsDetailPageProps {
   }>;
 }
 
-// Функция для получения новости по slug из API
-async function getNewsFromApi(slug: string) {
+function normalizeNews<T extends { tags?: string | null }>(item: T) {
+  return {
+    ...item,
+    tags: item.tags
+      ? item.tags
+          .split(',')
+          .map(tag => tag.trim())
+          .filter(Boolean)
+      : [],
+  };
+}
+
+// Функция для получения новости по slug напрямую из базы
+async function getNewsBySlug(slug: string) {
   try {
-    const response = await fetch(buildApiUrl('/api/news', { slug }), {
-      cache: 'no-store'
+    const news = await prisma.news.findUnique({
+      where: { slug },
+      include: {
+        author: true,
+      },
     });
-    
-    if (!response.ok) {
+
+    if (!news || !news.published) {
       return null;
     }
-    
-    const data = await response.json();
-    if (data.success && data.data.news.length > 0) {
-      return data.data.news[0];
-    }
-    
-    return null;
+
+    return normalizeNews(news);
   } catch (error) {
-    console.error('Error fetching news:', error);
+    console.error('Error fetching news by slug:', error);
     return null;
   }
 }
@@ -61,29 +47,37 @@ async function getNewsFromApi(slug: string) {
 // Функция для получения связанных новостей
 async function getRelatedNews(category: string, currentSlug: string) {
   try {
-    const response = await fetch(buildApiUrl('/api/news', { category, limit: '4' }), {
-      cache: 'no-store'
+    const related = await prisma.news.findMany({
+      where: {
+        category,
+        slug: { not: currentSlug },
+        published: true,
+      },
+      orderBy: { publishedAt: 'desc' },
+      take: 4,
     });
-    
-    if (!response.ok) {
-      return [];
-    }
-    
-    const data = await response.json();
-    if (data.success) {
-      return data.data.news.filter((item: { slug: string }) => item.slug !== currentSlug);
-    }
-    
-    return [];
+
+    return related.map(item => normalizeNews(item));
   } catch (error) {
     console.error('Error fetching related news:', error);
     return [];
   }
 }
 
+async function getCategoryBySlug(slug: string) {
+  try {
+    return await prisma.category.findUnique({
+      where: { slug },
+    });
+  } catch (error) {
+    console.error('Error fetching category:', error);
+    return null;
+  }
+}
+
 export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
   const { slug } = await params;
-  const news = await getNewsFromApi(slug);
+  const news = await getNewsBySlug(slug);
 
   if (!news) {
     notFound();
@@ -97,18 +91,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
     });
   };
 
-  async function getCategoryInfo(categoryId: string) {
-    try {
-      const response = await fetch(buildApiUrl('/api/categories'), { cache: 'no-store' });
-      const data = await response.json();
-      if (response.ok && data?.data?.length) {
-        return data.data.find((c: any) => c.slug === categoryId);
-      }
-    } catch {}
-    return null;
-  }
-
-  const categoryInfo = await getCategoryInfo(news.category);
+  const categoryInfo = await getCategoryBySlug(news.category);
 
   // Получаем связанные новости (из той же категории, исключая текущую)
   const relatedNews = await getRelatedNews(news.category, news.slug);
@@ -131,7 +114,16 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
             
             <div className="flex items-center space-x-4">
               {categoryInfo && (
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${categoryInfo.color}`}>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    categoryInfo.color?.startsWith('#') ? '' : categoryInfo.color || 'bg-blue-500'
+                  }`}
+                  style={
+                    categoryInfo.color?.startsWith('#')
+                      ? { backgroundColor: categoryInfo.color, color: '#fff' }
+                      : undefined
+                  }
+                >
                   {categoryInfo.name}
                 </span>
               )}
@@ -339,7 +331,7 @@ export async function generateStaticParams() {
 // Метаданные для SEO
 export async function generateMetadata({ params }: NewsDetailPageProps) {
   const { slug } = await params;
-  const news = await getNewsFromApi(slug);
+  const news = await getNewsBySlug(slug);
   
   if (!news) {
     return {
