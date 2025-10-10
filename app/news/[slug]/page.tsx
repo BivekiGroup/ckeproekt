@@ -4,6 +4,31 @@ import Link from 'next/link';
 import Image from 'next/image';
 // категории будем подтягивать с API
 
+function getBaseUrl() {
+  const explicit =
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXTAUTH_URL;
+  
+  if (explicit) {
+    return explicit.replace(/\/$/, '');
+  }
+
+  const port = process.env.PORT || '3000';
+  return `http://127.0.0.1:${port}`;
+}
+
+function buildApiUrl(path: string, searchParams?: Record<string, string | undefined>) {
+  const url = new URL(path, `${getBaseUrl()}/`);
+  if (searchParams) {
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value !== undefined) {
+        url.searchParams.set(key, value);
+      }
+    });
+  }
+  return url.toString();
+}
+
 interface NewsDetailPageProps {
   params: Promise<{
     slug: string;
@@ -13,7 +38,7 @@ interface NewsDetailPageProps {
 // Функция для получения новости по slug из API
 async function getNewsFromApi(slug: string) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/news?slug=${slug}`, {
+    const response = await fetch(buildApiUrl('/api/news', { slug }), {
       cache: 'no-store'
     });
     
@@ -36,7 +61,7 @@ async function getNewsFromApi(slug: string) {
 // Функция для получения связанных новостей
 async function getRelatedNews(category: string, currentSlug: string) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/news?category=${category}&limit=4`, {
+    const response = await fetch(buildApiUrl('/api/news', { category, limit: '4' }), {
       cache: 'no-store'
     });
     
@@ -74,7 +99,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
 
   async function getCategoryInfo(categoryId: string) {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/categories`, { cache: 'no-store' });
+      const response = await fetch(buildApiUrl('/api/categories'), { cache: 'no-store' });
       const data = await response.json();
       if (response.ok && data?.data?.length) {
         return data.data.find((c: any) => c.slug === categoryId);
