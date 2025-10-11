@@ -111,9 +111,13 @@ export default function NewsPageComponent() {
 
         const response = await fetch(`/api/news?${params}`);
         const data = await response.json();
-        
+
         if (data.success) {
-          setNews(data.data.news);
+          const sortedNews = [...data.data.news].sort(
+            (a: NewsItem, b: NewsItem) =>
+              new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+          );
+          setNews(sortedNews);
           setTotalNews(data.data.pagination.total);
         } else {
           console.error('Error loading news:', data.error);
@@ -182,9 +186,9 @@ export default function NewsPageComponent() {
     <div className="min-h-screen bg-white flex flex-col">
       <Header selectedCity={selectedCity} onCityChange={handleCityChange} />
       
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-8 sm:pt-12">
         {/* Хлебные крошки */}
-        <div className="bg-gray-50 py-4">
+        <div className="bg-gray-50 py-2">
           <div className="container mx-auto px-4">
             <div className="flex items-center space-x-2 text-sm text-gray-600">
               <Link href="/" className="hover:text-blue-600 transition-colors">
@@ -197,7 +201,7 @@ export default function NewsPageComponent() {
         </div>
 
         {/* Заголовок страницы */}
-        <section className="py-16 bg-white">
+        <section className="pt-4 pb-6 sm:pb-10 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
@@ -211,10 +215,10 @@ export default function NewsPageComponent() {
         </section>
 
         {/* Панель фильтров */}
-        <section className="py-8 bg-gray-50">
+        <section className="py-2 bg-gray-50">
           <div className="container mx-auto px-4">
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-              <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 border border-gray-100">
+              <div className="space-y-2.5">
                 {/* Поиск */}
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -223,25 +227,25 @@ export default function NewsPageComponent() {
                     placeholder="Поиск по заголовку, описанию или содержимому..."
                     value={searchQuery}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500 transition-all duration-200"
+                    className="w-full pl-11 pr-3 py-1.5 border border-gray-200 rounded-lg focus:ring focus:ring-blue-500/40 focus:border-blue-500 text-gray-900 placeholder-gray-500 transition-all duration-150 text-sm"
                   />
                 </div>
 
                 {/* Фильтры */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 sm:gap-3">
                   {/* Категории */}
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-3 text-sm">
+                    <label className="block text-gray-700 font-semibold mb-1.5 text-xs uppercase tracking-wide">
                       Категория
                     </label>
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => handleCategoryChange('all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                          selectedCategory === 'all'
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                          className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-150 ${
+                            selectedCategory === 'all'
+                              ? 'bg-blue-600 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
                       >
                         Все
                       </button>
@@ -249,7 +253,7 @@ export default function NewsPageComponent() {
                         <button
                           key={category.id}
                           onClick={() => handleCategoryChange(category.id)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-150 ${
                             selectedCategory === category.id
                               ? 'bg-blue-600 text-white shadow-md'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -263,13 +267,13 @@ export default function NewsPageComponent() {
 
                   {/* Сортировка */}
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-3 text-sm">
+                    <label className="block text-gray-700 font-semibold mb-1.5 text-xs uppercase tracking-wide">
                       Сортировка
                     </label>
                     <select
                       value={sortBy}
                       onChange={(e) => handleSortChange(e.target.value as SortOption)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:ring focus:ring-blue-500/40 focus:border-blue-500 transition-all duration-150"
                     >
                       <option value="newest">Сначала новые</option>
                       <option value="oldest">Сначала старые</option>
@@ -280,10 +284,10 @@ export default function NewsPageComponent() {
 
                   {/* Статистика */}
                   <div className="flex items-center justify-center lg:justify-end">
-                    <div className="bg-gray-100 rounded-xl px-6 py-4 border border-gray-200">
+                    <div className="bg-gray-100 rounded-lg px-5 py-3 border border-gray-200">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-gray-900">{totalNews}</div>
-                        <div className="text-gray-600 text-sm">найдено</div>
+                        <div className="text-xl font-bold text-gray-900">{totalNews}</div>
+                        <div className="text-gray-600 text-xs">найдено</div>
                       </div>
                     </div>
                   </div>

@@ -23,13 +23,13 @@ const cityData = {
 } as const;
 
 const navigation = [
-  { name: 'О компании', href: '#about' },
-  { name: 'Преимущества', href: '#why-us' },
-  { name: 'Как мы работаем', href: '#workflow' },
-  { name: 'Сертификаты', href: '#certificates' },
-  { name: 'Услуги', href: '#services' },
+  { name: 'О компании', href: '/#about' },
+  { name: 'Преимущества', href: '/#why-us' },
+  { name: 'Как мы работаем', href: '/#workflow' },
+  { name: 'Сертификаты', href: '/#certificates' },
+  { name: 'Услуги', href: '/#services' },
   { name: 'Новости', href: '/news' },
-  { name: 'Контакты', href: '#contacts' },
+  { name: 'Контакты', href: '/#contacts' },
 ];
 
 type CityKey = keyof typeof cityData;

@@ -4,8 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import Link from 'next/link';
-import TextEditor from '@/app/admin/components/TextEditor';
 import ImageUpload from '@/app/admin/components/ImageUpload';
+import BlockEditor from '@/app/admin/components/BlockEditor';
+import {
+  ContentBlock,
+  createEmptyBlock,
+  renderBlocksToHtml
+} from '@/lib/content-blocks';
 
 interface UiCategory { id: string; name: string }
 
@@ -30,6 +35,9 @@ export default function CreateNewsPage() {
     { id: 'promotions', name: 'Акции' },
     { id: 'other', name: 'Другое' }
   ]);
+  const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([
+    createEmptyBlock('paragraph')
+  ]);
 
   useEffect(() => {
     (async () => {
@@ -44,6 +52,13 @@ export default function CreateNewsPage() {
       } catch {}
     })();
   }, []);
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      content: renderBlocksToHtml(contentBlocks)
+    }));
+  }, [contentBlocks]);
 
   const generateSlug = (title: string) => {
     return title
@@ -83,6 +98,13 @@ export default function CreateNewsPage() {
     setLoading(true);
 
     try {
+      const htmlContent = renderBlocksToHtml(contentBlocks);
+      if (!htmlContent.trim()) {
+        alert('Добавьте содержание новости');
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/news', {
         method: 'POST',
         headers: {
@@ -90,6 +112,7 @@ export default function CreateNewsPage() {
         },
         body: JSON.stringify({
           ...formData,
+          content: htmlContent,
           publishedAt: new Date(formData.publishedAt).toISOString()
         })
       });
@@ -111,7 +134,13 @@ export default function CreateNewsPage() {
   };
 
   const handleSaveAsDraft = async () => {
-    const draftData = { ...formData, published: false };
+    const htmlContent = renderBlocksToHtml(contentBlocks);
+    if (!htmlContent.trim()) {
+      alert('Добавьте содержание новости');
+      return;
+    }
+
+    const draftData = { ...formData, content: htmlContent, published: false };
     setFormData(draftData);
     
     // Сохраняем как черновик
@@ -123,6 +152,7 @@ export default function CreateNewsPage() {
         },
         body: JSON.stringify({
           ...draftData,
+          content: htmlContent,
           publishedAt: new Date(draftData.publishedAt).toISOString()
         })
       });
@@ -214,10 +244,9 @@ export default function CreateNewsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Содержание *
               </label>
-              <TextEditor
-                value={formData.content}
-                onChange={(content) => setFormData(prev => ({ ...prev, content }))}
-                placeholder="Введите содержание новости..."
+              <BlockEditor
+                blocks={contentBlocks}
+                onChange={setContentBlocks}
               />
             </div>
 

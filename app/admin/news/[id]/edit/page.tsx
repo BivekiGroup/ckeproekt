@@ -1,11 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Save, Eye, Upload, X, Trash2 } from 'lucide-react';
 import { NewsFormData, NewsCategory } from '@/lib/types';
 // import { getNewsById } from '@/lib/news-data';
+import BlockEditor from '@/app/admin/components/BlockEditor';
+import {
+  ContentBlock,
+  createEmptyBlock,
+  parseHtmlToBlocks,
+  renderBlocksToHtml
+} from '@/lib/content-blocks';
 
 interface EditNewsPageProps {
   params: Promise<{
@@ -39,6 +46,9 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
     { id: 'company', name: 'Новости компании' },
     { id: 'promotions', name: 'Акции' },
     { id: 'other', name: 'Другое' }
+  ]);
+  const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([
+    createEmptyBlock('paragraph')
   ]);
 
   useEffect(() => {
@@ -75,6 +85,9 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
             publishedAt: new Date(news.publishedAt).toISOString().slice(0, 16),
             tags: news.tags || []
           });
+
+          const parsedBlocks = parseHtmlToBlocks(news.content || '');
+          setContentBlocks(parsedBlocks.length ? parsedBlocks : [createEmptyBlock('paragraph')]);
           
           if (news.imageUrl) {
             setImagePreview(news.imageUrl);
@@ -89,6 +102,18 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
     loadNews();
   }, [params]);
 
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      content: renderBlocksToHtml(contentBlocks)
+    }));
+  }, [contentBlocks]);
+
+  const previewHtml = useMemo(
+    () => renderBlocksToHtml(contentBlocks),
+    [contentBlocks]
+  );
+
   const validateForm = (): boolean => {
     const newErrors: Partial<NewsFormData> = {};
 
@@ -100,7 +125,8 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
       newErrors.summary = 'Краткое описание обязательно';
     }
 
-    if (!formData.content.trim()) {
+    const htmlContent = renderBlocksToHtml(contentBlocks);
+    if (!htmlContent.trim()) {
       newErrors.content = 'Содержание обязательно';
     }
 
@@ -141,6 +167,7 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
     try {
       // Генерируем slug
       const slug = generateSlug(formData.title);
+      const htmlContent = renderBlocksToHtml(contentBlocks);
       
       // Обновляем новость через API
       const response = await fetch(`/api/news/${newsId}`, {
@@ -150,6 +177,7 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
         },
         body: JSON.stringify({
           ...formData,
+          content: htmlContent,
           slug,
           publishedAt: new Date(formData.publishedAt).toISOString()
         })
@@ -228,13 +256,6 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
-  };
-
-  const formatContentForPreview = (content: string) => {
-    return content
-      .replace(/\n/g, '<br>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>');
   };
 
   if (isLoading) {
@@ -349,15 +370,9 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
               <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
                 Содержание *
               </label>
-              <textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                rows={12}
-                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.content ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Полное содержание новости. Поддерживается простая разметка: **жирный**, *курсив*"
+              <BlockEditor
+                blocks={contentBlocks}
+                onChange={setContentBlocks}
               />
               {errors.content && (
                 <p className="mt-1 text-sm text-red-600">{errors.content}</p>
@@ -546,7 +561,7 @@ export default function EditNewsPage({ params }: EditNewsPageProps) {
                 <div 
                   className="prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ 
-                    __html: formatContentForPreview(formData.content || 'Содержание новости') 
+                    __html: previewHtml || '<p class="text-gray-500">Содержание новости</p>'
                   }}
                 />
               </div>
