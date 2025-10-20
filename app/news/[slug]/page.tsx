@@ -184,6 +184,53 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
       }
 
       flushList();
+
+      const normalizedSpacing = trimmed.replace(/([.!?])(?=[^\s])/g, '$1 ');
+      const sentenceMatches =
+        normalizedSpacing.match(/[^.!?]+[.!?]?/g)?.map(segment => segment.trim()).filter(Boolean) ?? [];
+
+      if (sentenceMatches.length >= 3) {
+        const [headingCandidateRaw, ...restSentencesRaw] = sentenceMatches;
+        const headingCandidate = headingCandidateRaw.replace(/[.!?]$/, '').replace(/^[—-]\s*/, '').trim();
+        const stepCandidates = restSentencesRaw
+          .map(sentence => sentence.replace(/[.!?]$/, '').replace(/^[—-]\s*/, '').trim())
+          .filter(Boolean)
+          .filter((sentence, index, array) => array.indexOf(sentence) === index);
+
+        const isQuestionHeading = /^(Как|Что|Почему|Когда|Где|Зачем)\b/i.test(headingCandidate);
+
+        if (isQuestionHeading && stepCandidates.length >= 3) {
+          const stepsHtml = stepCandidates
+            .map((sentence, index) => {
+              const stepNumber = (index + 1).toString().padStart(2, '0');
+              return `
+                <li class="group flex items-start gap-4 rounded-2xl bg-white/5 p-5 border border-white/10 hover:bg-white/10 transition-colors">
+                  <span class="mt-1 text-sm font-semibold text-white/60 leading-none">${stepNumber}</span>
+                  <p class="text-base text-white/90 leading-relaxed">${formatInline(sentence)}</p>
+                </li>
+              `;
+            })
+            .join('');
+
+          htmlParts.push(
+            `<section class="mt-16 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white px-6 py-8 sm:px-8 sm:py-10 border border-white/10 shadow-xl">
+              <div class="flex flex-col gap-6">
+                <div class="flex flex-col gap-3">
+                  <span class="inline-flex items-center gap-2 self-start rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/60">
+                    шаги
+                  </span>
+                  <h3 class="text-2xl md:text-3xl font-bold leading-tight">${formatInline(headingCandidate)}</h3>
+                </div>
+                <ol class="list-none grid gap-4 md:grid-cols-2">
+                  ${stepsHtml}
+                </ol>
+              </div>
+            </section>`
+          );
+          return;
+        }
+      }
+
       htmlParts.push(
         `<p class="text-lg leading-relaxed text-gray-700">${formatInline(trimmed)}</p>`
       );
@@ -193,23 +240,73 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
     return htmlParts.join('\n');
   };
 
-  const articleHtml = news.content?.includes('data-block=')
+  const enhanceCmsCtaBlocks = (html: string | undefined) => {
+    if (!html) return html;
+
+    return html.replace(
+      /<section\b[^>]*data-block="cta"[^>]*>[\s\S]*?<\/section>/gi,
+      section => {
+        const titleMatch = section.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i);
+        const descriptionMatch = section.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+        const buttonMatch = section.match(/<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
+
+        const titleHtml = titleMatch?.[1]?.trim() ?? '';
+        const descriptionHtml = descriptionMatch?.[1]?.trim() ?? '';
+        const buttonHref = buttonMatch?.[1]?.trim() ?? '';
+        const buttonLabel = buttonMatch?.[2]?.trim() ?? '';
+
+        const titleBlock = titleHtml
+          ? `<h3 class="text-2xl sm:text-3xl font-bold leading-tight text-white">${titleHtml}</h3>`
+          : '';
+
+        const descriptionBlock = descriptionHtml
+          ? `<p class="text-base text-white/70 leading-relaxed">${descriptionHtml}</p>`
+          : '';
+
+        const buttonBlock =
+          buttonHref && buttonLabel
+            ? `<a href="${buttonHref}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/10 hover:border-white/25">
+                ${buttonLabel}
+                <svg class="h-4 w-4 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6l6 6-6 6" />
+                </svg>
+              </a>`
+            : '';
+
+        const buttonWrapper = buttonBlock
+          ? `<div class="mt-6 flex flex-col sm:flex-row sm:items-center gap-3">${buttonBlock}</div>`
+          : '';
+
+        return `<section data-block="cta" class="not-prose relative my-12 rounded-2xl bg-white/[0.04] ring-1 ring-white/5 hover:bg-white/[0.06] hover:ring-white/10 transition-all duration-300">
+  <div class="px-6 py-8 sm:px-8 sm:py-10 space-y-4">
+    ${titleBlock}
+    ${descriptionBlock}
+    ${buttonWrapper}
+  </div>
+</section>`;
+      }
+    );
+  };
+
+  const articleHtml = enhanceCmsCtaBlocks(
+    news.content?.includes('data-block=')
     ? news.content
-    : formatLegacyContent(news.content || '');
+    : formatLegacyContent(news.content || '')
+  ) ?? '';
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
       {/* Fixed Navigation */}
       <nav
-        className="fixed top-0 left-0 right-0 z-50 bg-black/85 backdrop-blur-md border-b border-white/10"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+        className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-3 sm:pb-0">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3 text-white">
               <Link
                 href="/news"
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm font-medium hover:bg-white/10 transition-colors"
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-medium hover:bg-white/10 transition-colors"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -221,7 +318,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
 
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
+                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/25 transition-colors"
               >
                 <Home className="h-4 w-4" />
                 <span>CKE Project</span>
@@ -250,7 +347,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
 
               <a
                 href={`tel:${phoneHref}`}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 font-medium text-white hover:bg-white/15 transition-colors"
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 font-medium text-white hover:bg-white/15 transition-colors"
               >
                 <Phone className="h-4 w-4" />
                 <span>{phoneNumber}</span>
@@ -262,7 +359,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
 
       {/* Full Screen Hero */}
       <section
-        className="relative min-h-screen flex items-center justify-center pt-28 sm:pt-0"
+        className="relative min-h-screen flex items-center justify-center pt-44 sm:pt-40 md:pt-36 lg:pt-40"
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
       >
         {/* Background Image */}
@@ -278,7 +375,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-12 sm:pt-0">
           <div className="space-y-8">
             {/* Badges */}
             <div className="flex items-center justify-center gap-4">
@@ -344,45 +441,45 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
 
       {/* Related News - Full Width */}
       {relatedNews.length > 0 && (
-        <section className="bg-gray-900 text-white py-20">
+        <section className="bg-[#0f1017] text-white py-16 border-t border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-5xl font-bold mb-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-5xl font-bold mb-3">
                 Похожие новости
               </h2>
-              <p className="text-xl text-gray-400">
+              <p className="text-base md:text-lg text-white/60">
                 Другие материалы из категории &quot;{categoryInfo?.name}&quot;
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedNews.map((relatedNewsItem: any) => (
                 <Link
                   key={relatedNewsItem.id}
                   href={`/news/${relatedNewsItem.slug}`}
                   className="group block"
                 >
-                  <article className="bg-gray-800 rounded-2xl overflow-hidden hover:bg-gray-700 transition-all duration-500 transform hover:scale-105">
+                  <article className="bg-white/[0.04] rounded-2xl overflow-hidden ring-1 ring-white/5 hover:bg-white/[0.08] hover:ring-white/10 transition-all duration-300">
                     <div className="relative h-48 overflow-hidden">
                       <Image
                         src={relatedNewsItem.imageUrl || '/images/office.jpg'}
                         alt={relatedNewsItem.title}
                         fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                     </div>
                     
                     <div className="p-6">
-                      <div className="text-sm text-blue-400 font-semibold mb-2 uppercase tracking-wide">
+                      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50 mb-3">
                         {formatDate(relatedNewsItem.publishedAt)}
                       </div>
                       
-                      <h3 className="text-lg font-bold mb-3 line-clamp-2 group-hover:text-blue-400 transition-colors duration-300">
+                      <h3 className="text-lg font-semibold mb-3 line-clamp-2 group-hover:text-white transition-colors duration-300">
                         {relatedNewsItem.title}
                       </h3>
                       
-                      <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed">
+                      <p className="text-white/60 text-sm line-clamp-3 leading-relaxed">
                         {relatedNewsItem.summary}
                       </p>
                     </div>
@@ -393,7 +490,6 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
           </div>
         </section>
       )}
-
       {/* Full Width CTA */}
       <section className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -409,7 +505,7 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
               className="inline-flex items-center px-8 py-4 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
               <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7В8z" />
               </svg>
               Все новости
             </Link>
@@ -418,14 +514,13 @@ export default async function NewsDetailPage({ params }: NewsDetailPageProps) {
               className="inline-flex items-center px-8 py-4 bg-transparent text-white font-bold rounded-xl border-2 border-white hover:bg-white hover:text-gray-900 transition-all duration-300 transform hover:scale-105"
             >
               <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0л7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               Главная страница
             </Link>
           </div>
         </div>
       </section>
-
 
     </div>
   );

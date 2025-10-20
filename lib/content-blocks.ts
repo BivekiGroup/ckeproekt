@@ -200,13 +200,29 @@ export const renderBlocksToHtml = (blocks: ContentBlock[]): string => {
             return '';
           }
           const button = buttonLabel && buttonUrl
-            ? `<a href="${escapeHtml(buttonUrl)}" class="inline-flex items-center px-6 py-3 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-100 transition-colors duration-200">${escapeHtml(buttonLabel)}</a>`
+            ? `<a href="${escapeHtml(buttonUrl)}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/10 hover:border-white/25">
+                ${escapeHtml(buttonLabel)}
+                <svg class="h-4 w-4 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6l6 6-6 6" />
+                </svg>
+              </a>`
             : '';
-          const titleHtml = title ? `<h3 class="text-2xl font-bold">${applyInlineFormatting(title)}</h3>` : '';
+          const titleHtml = title
+            ? `<h3 class="text-2xl sm:text-3xl font-bold leading-tight text-white">${applyInlineFormatting(title)}</h3>`
+            : '';
           const descriptionHtml = description
-            ? `<p class="text-lg text-blue-100 leading-relaxed">${formatWithLineBreaks(description)}</p>`
+            ? `<p class="text-base text-white/70 leading-relaxed">${formatWithLineBreaks(description)}</p>`
             : '';
-          return `<section data-block="cta" class="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white rounded-3xl p-10 my-12 text-center space-y-4">${titleHtml}${descriptionHtml}${button}</section>`;
+          const buttonSection = button
+            ? `<div class="mt-6 flex flex-col sm:flex-row sm:items-center gap-3">${button}</div>`
+            : '';
+          return `<section data-block="cta" class="not-prose relative my-12 rounded-2xl bg-white/[0.04] ring-1 ring-white/5 hover:bg-white/[0.06] hover:ring-white/10 transition-all duration-300">
+              <div class="px-6 py-8 sm:px-8 sm:py-10 space-y-4">
+                ${titleHtml}
+                ${descriptionHtml}
+                ${buttonSection}
+              </div>
+            </section>`;
         }
         case 'paragraph':
         default: {

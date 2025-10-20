@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { formatPhoneNumber, validatePhoneNumber } from '@/lib/utils';
 import { sendTelegramNotification } from '@/lib/telegram';
 import { cn } from '@/lib/utils';
+import { reachGoal } from '@/app/components/YandexMetrika';
 
 const ContactForm = () => {
   const [phone, setPhone] = useState('');
@@ -31,12 +32,18 @@ const ContactForm = () => {
       return;
     }
 
+    // Отслеживаем клик по кнопке консультации
+    reachGoal('consultation_click');
+
     setIsLoading(true);
 
     try {
       const success = await sendTelegramNotification(phone, 'Форма контактов');
 
       if (success) {
+        // Отслеживаем успешную отправку формы
+        reachGoal('contact_form_success', { form_type: 'consultation' });
+
         setIsSubmitted(true);
         setError('');
         setTimeout(() => {
