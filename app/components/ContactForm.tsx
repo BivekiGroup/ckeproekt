@@ -6,7 +6,6 @@ import { Phone, CheckCircle2, HelpCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatPhoneNumber, validatePhoneNumber } from '@/lib/utils';
-import { sendTelegramNotification } from '@/lib/telegram';
 import { cn } from '@/lib/utils';
 import { reachGoal } from '@/app/components/YandexMetrika';
 
@@ -38,9 +37,18 @@ const ContactForm = () => {
     setIsLoading(true);
 
     try {
-      const success = await sendTelegramNotification(phone, 'Форма контактов');
+      const response = await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone,
+          source: 'Форма контактов',
+        }),
+      });
 
-      if (success) {
+      if (response.ok) {
         // Отслеживаем успешную отправку формы
         reachGoal('contact_form_success', { form_type: 'consultation' });
 

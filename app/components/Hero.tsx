@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Phone, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatPhoneNumber, validatePhoneNumber } from '@/lib/utils';
-import { sendTelegramNotification } from '@/lib/telegram';
 import ContactModal from './ContactModal';
 import { cn } from '@/lib/utils';
 
@@ -38,9 +37,18 @@ const Hero = ({ selectedCity }: HeroProps) => {
     setIsLoading(true);
 
     try {
-      const success = await sendTelegramNotification(phone, 'Главный экран');
+      const response = await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone,
+          source: 'Главный экран',
+        }),
+      });
 
-      if (success) {
+      if (response.ok) {
         setIsSubmitted(true);
         setError('');
         setTimeout(() => {
