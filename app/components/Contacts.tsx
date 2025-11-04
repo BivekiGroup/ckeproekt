@@ -11,8 +11,9 @@ import {
   FileText,
 } from 'lucide-react';
 
-const cityContacts = {
-  Москва: {
+const cityContacts = [
+  {
+    city: 'Москва',
     address: 'г. Москва, ул. Космонавта Волкова, д. 29к1',
     phone: '+7 (916) 830-58-58',
     email: 'ckeproekt@yandex.ru',
@@ -20,7 +21,8 @@ const cityContacts = {
     mapLink: 'https://yandex.ru/maps/-/CCUzYXu7xC',
     coordinates: [37.539042, 55.74733],
   },
-  Чебоксары: {
+  {
+    city: 'Чебоксары',
     address: 'г. Чебоксары, ул. Зои Яковлевой, д. 54',
     phone: '+7 (916) 830-58-58',
     email: 'ckeproekt@yandex.ru',
@@ -28,7 +30,7 @@ const cityContacts = {
     mapLink: 'https://yandex.ru/maps/-/CCUzYXBpkD',
     coordinates: [47.290091, 56.107257],
   },
-} as const;
+] as const;
 
 const features = [
   {
@@ -43,12 +45,7 @@ const features = [
   },
 ];
 
-interface ContactsProps {
-  selectedCity: keyof typeof cityContacts;
-}
-
-const Contacts = ({ selectedCity }: ContactsProps) => {
-  const cityData = cityContacts[selectedCity];
+const Contacts = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
@@ -103,17 +100,22 @@ const Contacts = ({ selectedCity }: ContactsProps) => {
               Контакты
             </h2>
             <p className="text-xl text-gray-600">
-              Выберите удобный способ связи или посетите наш офис
+              Выберите удобный способ связи или посетите один из наших офисов
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <motion.div variants={itemVariants} className="space-y-8">
+          {/* Офисы */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            {cityContacts.map((cityData, index) => (
               <motion.div
+                key={index}
                 variants={itemVariants}
                 whileHover={{ scale: 1.02 }}
                 className="bg-white rounded-xl p-8 shadow-lg"
               >
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                  {cityData.city}
+                </h3>
                 <div className="space-y-6">
                   <motion.div
                     className="flex items-start gap-4"
@@ -129,9 +131,9 @@ const Contacts = ({ selectedCity }: ContactsProps) => {
                       </motion.div>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-1">
                         Адрес
-                      </h3>
+                      </h4>
                       <p className="text-gray-600">{cityData.address}</p>
                       <motion.a
                         href={cityData.mapLink}
@@ -155,19 +157,57 @@ const Contacts = ({ selectedCity }: ContactsProps) => {
                         transition={{ duration: 0.5 }}
                         className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center"
                       >
+                        <Clock className="h-6 w-6 text-blue-700" />
+                      </motion.div>
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                        Время работы
+                      </h4>
+                      <p className="text-gray-600">{cityData.workHours}</p>
+                      <p className="text-gray-600">Сб-Вс: 8:00 - 18:00</p>
+                    </div>
+                  </motion.div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Общие контакты */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <motion.div variants={itemVariants} className="space-y-8">
+              <motion.div
+                variants={itemVariants}
+                whileHover={{ scale: 1.02 }}
+                className="bg-white rounded-xl p-8 shadow-lg"
+              >
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                  Общие контакты
+                </h3>
+                <div className="space-y-6">
+                  <motion.div
+                    className="flex items-start gap-4"
+                    whileHover={{ x: 10 }}
+                  >
+                    <div className="flex-shrink-0">
+                      <motion.div
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.5 }}
+                        className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center"
+                      >
                         <Phone className="h-6 w-6 text-blue-700" />
                       </motion.div>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-1">
                         Телефон
-                      </h3>
+                      </h4>
                       <motion.a
-                        href={`tel:${cityData.phone}`}
-                        className="text-gray-600 hover:text-blue-700"
+                        href={`tel:${cityContacts[0].phone}`}
+                        className="text-gray-600 hover:text-blue-700 text-lg"
                         whileHover={{ x: 5 }}
                       >
-                        {cityData.phone}
+                        {cityContacts[0].phone}
                       </motion.a>
                     </div>
                   </motion.div>
@@ -186,38 +226,16 @@ const Contacts = ({ selectedCity }: ContactsProps) => {
                       </motion.div>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-1">
                         Email
-                      </h3>
+                      </h4>
                       <motion.a
-                        href={`mailto:${cityData.email}`}
+                        href={`mailto:${cityContacts[0].email}`}
                         className="text-gray-600 hover:text-blue-700"
                         whileHover={{ x: 5 }}
                       >
-                        {cityData.email}
+                        {cityContacts[0].email}
                       </motion.a>
-                    </div>
-                  </motion.div>
-
-                  <motion.div
-                    className="flex items-start gap-4"
-                    whileHover={{ x: 10 }}
-                  >
-                    <div className="flex-shrink-0">
-                      <motion.div
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.5 }}
-                        className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center"
-                      >
-                        <Clock className="h-6 w-6 text-blue-700" />
-                      </motion.div>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        Время работы
-                      </h3>
-                      <p className="text-gray-600">{cityData.workHours}</p>
-                      <p className="text-gray-600">Сб-Вс: 8:00 - 18:00</p>
                     </div>
                   </motion.div>
                 </div>

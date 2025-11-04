@@ -9,11 +9,7 @@ import { formatPhoneNumber, validatePhoneNumber } from '@/lib/utils';
 import ContactModal from './ContactModal';
 import { cn } from '@/lib/utils';
 
-interface HeroProps {
-  selectedCity: 'Москва' | 'Чебоксары';
-}
-
-const Hero = ({ selectedCity }: HeroProps) => {
+const Hero = () => {
   const [phone, setPhone] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
@@ -121,8 +117,7 @@ const Hero = ({ selectedCity }: HeroProps) => {
             className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight"
             variants={itemVariants}
           >
-            Независимая строительно-техническая экспертиза в{' '}
-            {selectedCity === 'Москва' ? 'Москве' : 'Чебоксарах'}
+            Независимая строительно-техническая экспертиза
           </motion.h1>
 
           {/* Описание */}

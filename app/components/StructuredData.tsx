@@ -22,7 +22,7 @@ export default function StructuredData({
           url: 'https://ckeproekt.ru',
           logo: 'https://ckeproekt.ru/images/office.jpg',
           description:
-            'Независимая строительно-техническая экспертиза в Москве и Чебоксарах',
+            'Независимая строительно-техническая экспертиза',
           address: [
             {
               '@type': 'PostalAddress',

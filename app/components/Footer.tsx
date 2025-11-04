@@ -20,25 +20,16 @@ const legalLinks = [
   { name: 'Обработка персональных данных', href: '/personal-data' },
 ];
 
-const cityContacts = {
-  Москва: {
-    address: 'г. Москва, ул. Космонавта Волкова, д. 29к1',
-    phone: '+7 (916) 830-58-58',
-    email: 'ckeproekt@yandex.ru',
-  },
-  Чебоксары: {
-    address: 'г. Чебоксары, ул. Зои Яковлевой, д. 54',
-    phone: '+7 (916) 830-58-58',
-    email: 'ckeproekt@yandex.ru',
-  },
+const contacts = {
+  phone: '+7 (916) 830-58-58',
+  email: 'ckeproekt@yandex.ru',
+  offices: [
+    'г. Москва, ул. Космонавта Волкова, д. 29к1',
+    'г. Чебоксары, ул. Зои Яковлевой, д. 54',
+  ],
 };
 
-interface FooterProps {
-  selectedCity: keyof typeof cityContacts;
-}
-
-const Footer = ({ selectedCity }: FooterProps) => {
-  const cityData = cityContacts[selectedCity];
+const Footer = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
@@ -120,23 +111,26 @@ const Footer = ({ selectedCity }: FooterProps) => {
           <motion.div variants={itemVariants} className="space-y-4">
             <h3 className="font-semibold text-gray-900">Контакты</h3>
             <div className="space-y-3">
-              <motion.div
-                whileHover={{ x: 5 }}
-                className="flex items-center gap-2 text-sm text-gray-600"
-              >
-                <MapPin className="h-4 w-4 text-blue-700 flex-shrink-0" />
-                <span>{cityData.address}</span>
-              </motion.div>
+              {contacts.offices.map((office, index) => (
+                <motion.div
+                  key={index}
+                  whileHover={{ x: 5 }}
+                  className="flex items-start gap-2 text-sm text-gray-600"
+                >
+                  <MapPin className="h-4 w-4 text-blue-700 flex-shrink-0 mt-0.5" />
+                  <span>{office}</span>
+                </motion.div>
+              ))}
               <motion.div
                 whileHover={{ x: 5 }}
                 className="flex items-center gap-2 text-sm text-gray-600"
               >
                 <Phone className="h-4 w-4 text-blue-700 flex-shrink-0" />
                 <a
-                  href={`tel:${cityData.phone}`}
+                  href={`tel:${contacts.phone}`}
                   className="hover:text-blue-700"
                 >
-                  {cityData.phone}
+                  {contacts.phone}
                 </a>
               </motion.div>
               <motion.div
@@ -145,10 +139,10 @@ const Footer = ({ selectedCity }: FooterProps) => {
               >
                 <Mail className="h-4 w-4 text-blue-700 flex-shrink-0" />
                 <a
-                  href={`mailto:${cityData.email}`}
+                  href={`mailto:${contacts.email}`}
                   className="hover:text-blue-700"
                 >
-                  {cityData.email}
+                  {contacts.email}
                 </a>
               </motion.div>
             </div>

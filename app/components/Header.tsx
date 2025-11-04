@@ -4,23 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { MapPin, Phone, Building, Menu, X } from 'lucide-react';
+import { Phone, Building, Menu, X } from 'lucide-react';
 import ContactModal from './ContactModal';
-
-const cityData = {
-  Москва: {
-    phone: '+7 (916) 830-58-58',
-  },
-  Чебоксары: {
-    phone: '+7 (916) 830-58-58',
-  },
-} as const;
 
 const navigation = [
   { name: 'О компании', href: '/#about' },
@@ -32,14 +17,9 @@ const navigation = [
   { name: 'Контакты', href: '/#contacts' },
 ];
 
-type CityKey = keyof typeof cityData;
+const PHONE = '+7 (916) 830-58-58';
 
-interface HeaderProps {
-  selectedCity: CityKey;
-  onCityChange: (city: CityKey) => void;
-}
-
-const Header = ({ selectedCity, onCityChange }: HeaderProps) => {
+const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -97,13 +77,11 @@ const Header = ({ selectedCity, onCityChange }: HeaderProps) => {
             {/* Мобильный номер телефона и кнопка меню */}
             <div className="flex items-center space-x-4 lg:hidden">
               <a
-                href={`tel:${cityData[selectedCity].phone}`}
+                href={`tel:${PHONE}`}
                 className="flex items-center text-gray-600 hover:text-blue-700 whitespace-nowrap"
               >
                 <Phone className="h-4 w-4 text-blue-700 mr-1" />
-                <span className="text-xs font-medium">
-                  {cityData[selectedCity].phone}
-                </span>
+                <span className="text-xs font-medium">{PHONE}</span>
               </a>
 
               <button
@@ -134,38 +112,12 @@ const Header = ({ selectedCity, onCityChange }: HeaderProps) => {
 
             {/* Десктопные контакты и кнопки */}
             <div className="hidden lg:flex items-center space-x-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center space-x-2 hover:bg-gray-100"
-                  >
-                    <MapPin className="h-4 w-4 text-blue-700" />
-                    <span>{selectedCity}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => onCityChange('Москва')}
-                    className="cursor-pointer"
-                  >
-                    Москва
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onCityChange('Чебоксары')}
-                    className="cursor-pointer"
-                  >
-                    Чебоксары
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
               <a
-                href={`tel:${cityData[selectedCity].phone}`}
+                href={`tel:${PHONE}`}
                 className="flex items-center space-x-2 text-gray-600 hover:text-blue-700"
               >
                 <Phone className="h-4 w-4" />
-                <span>{cityData[selectedCity].phone}</span>
+                <span>{PHONE}</span>
               </a>
 
               <Button
@@ -202,32 +154,6 @@ const Header = ({ selectedCity, onCityChange }: HeaderProps) => {
           </nav>
 
           <div className="mt-8 pt-8 border-t border-gray-200">
-            <p className="text-gray-500 mb-4">Выберите город:</p>
-            <div className="space-y-3 mb-8">
-              <button
-                onClick={() => onCityChange('Москва')}
-                className={`w-full py-2 px-4 rounded-lg text-left ${
-                  selectedCity === 'Москва'
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <MapPin className="h-4 w-4 inline mr-2" />
-                Москва
-              </button>
-              <button
-                onClick={() => onCityChange('Чебоксары')}
-                className={`w-full py-2 px-4 rounded-lg text-left ${
-                  selectedCity === 'Чебоксары'
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <MapPin className="h-4 w-4 inline mr-2" />
-                Чебоксары
-              </button>
-            </div>
-
             <Button
               className="w-full bg-blue-700 hover:bg-blue-800 text-white py-6 text-lg"
               onClick={() => {

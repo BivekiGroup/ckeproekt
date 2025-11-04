@@ -23,15 +23,10 @@ export default function NewsPageComponent() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [selectedCity, setSelectedCity] = useState<'Москва' | 'Чебоксары'>('Москва');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [currentPage, setCurrentPage] = useState(1);
-
-  const handleCityChange = (city: 'Москва' | 'Чебоксары') => {
-    setSelectedCity(city);
-  };
 
   // Синхронизация с URL параметрами
   useEffect(() => {
@@ -170,21 +165,21 @@ export default function NewsPageComponent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex flex-col">
-        <Header selectedCity={selectedCity} onCityChange={handleCityChange} />
+        <Header />
         <main className="flex-1 flex items-center justify-center pt-20">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600 text-lg">Загрузка новостей...</p>
           </div>
         </main>
-        <Footer selectedCity={selectedCity} />
+        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header selectedCity={selectedCity} onCityChange={handleCityChange} />
+      <Header />
       
       <main className="flex-1 pt-8 sm:pt-12">
         {/* Хлебные крошки */}
@@ -499,7 +494,7 @@ export default function NewsPageComponent() {
         </section>
       </main>
 
-      <Footer selectedCity={selectedCity} />
+      <Footer />
     </div>
   );
 } 
