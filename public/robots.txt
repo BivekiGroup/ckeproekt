@@ -1,22 +1,45 @@
-# Robots.txt для ЦКЭ Проект
-# https://www.robotstxt.org/robotstxt.html
+# Robots.txt для ckeproekt.ru
+# Оптимизировано для SEO согласно блоку 2
 
 User-agent: *
 Allow: /
+
+# Закрываем административные разделы
 Disallow: /admin/
 Disallow: /api/
 
-# Яндекс
+# Закрываем служебные файлы
+Disallow: /_next/
+Disallow: /static/
+
+# Основные страницы для индексации
+Allow: /services/
+Allow: /news/
+Allow: /privacy-policy
+Allow: /terms
+Allow: /personal-data
+
+# Sitemap
+Sitemap: https://ckeproekt.ru/sitemap.xml
+
+# Правила для Yandex
 User-agent: Yandex
 Allow: /
 Disallow: /admin/
 Disallow: /api/
+Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content /
 
-# Google
+# Правила для Google
 User-agent: Googlebot
 Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-# Sitemap
-Sitemap: https://ckeproekt.ru/sitemap.xml
+# Правила для Googlebot-Image
+User-agent: Googlebot-Image
+Allow: /images/
+Allow: /public/
+
+# Скорость сканирования для Yandex (10 секунд между запросами)
+Host: ckeproekt.ru
+Crawl-delay: 1

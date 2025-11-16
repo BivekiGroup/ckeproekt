@@ -31,6 +31,7 @@ export const services = [
       'Составление экспертного заключения',
     ],
     image: '/images/placeholders/services/flood-expertise.jpg',
+    imageAlt: 'Экспертиза залива квартиры - оценка ущерба от протечки',
   },
   {
     icon: Waves,
@@ -45,6 +46,7 @@ export const services = [
       'Рекомендации по ремонту',
     ],
     image: '/images/placeholders/services/sewerage-inspection.jpg',
+    imageAlt: 'Видеодиагностика канализации - обследование труб камерой',
   },
   {
     icon: Home,
@@ -59,6 +61,7 @@ export const services = [
       'Подготовка документации',
     ],
     image: '/images/placeholders/services/house-recognition.jpg',
+    imageAlt: 'Экспертиза дома для признания жилым - перевод в жилое помещение',
   },
   {
     icon: CheckSquare,
@@ -73,6 +76,7 @@ export const services = [
       'Рекомендации по устранению',
     ],
     image: '/images/placeholders/services/renovation-expertise.jpg',
+    imageAlt: 'Экспертиза качества ремонта квартиры - проверка отделочных работ',
   },
   {
     icon: Thermometer,
@@ -87,6 +91,7 @@ export const services = [
       'Рекомендации по утеплению',
     ],
     image: '/images/placeholders/services/thermal-inspection.jpg',
+    imageAlt: 'Тепловизионное обследование дома - поиск утечек тепла тепловизором',
   },
   {
     icon: Thermometer,
@@ -101,6 +106,7 @@ export const services = [
       'Рекомендации по устранению',
     ],
     image: '/images/placeholders/services/construction-control.jpg',
+    imageAlt: 'Экспертиза плесени в квартире - определение причин появления грибка',
   },
   {
     icon: FlaskConical,
@@ -115,6 +121,7 @@ export const services = [
       'Составление технического паспорта',
     ],
     image: '/images/placeholders/services/room-measurement.jpg',
+    imageAlt: 'Обмер квартиры для технического плана - замер площади помещений',
   },
 ];
 
@@ -216,7 +223,7 @@ const Services = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
                     <Image
                       src={service.image}
-                      alt={service.title}
+                      alt={service.imageAlt || service.title}
                       fill
                       className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

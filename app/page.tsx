@@ -9,6 +9,7 @@ import WhyUs from './components/WhyUs';
 import WorkFlow from './components/WorkFlow';
 import Certificates from './components/Certificates';
 import Services from './components/Services';
+import SEOContent from './components/SEOContent';
 import NewsBlock from './components/NewsBlock';
 import Contacts from './components/Contacts';
 import ContactForm from './components/ContactForm';
@@ -47,6 +48,7 @@ export default function Home() {
             <WhyUs />
             <WorkFlow />
             <Certificates />
+            <SEOContent />
             <NewsBlock
               maxNews={4}
               showFeatured={true}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -14,6 +14,9 @@ import { Button } from '@/components/ui/button';
 import ContactModal from '@/app/components/ContactModal';
 import { services } from '@/app/components/Services';
 import { use } from 'react';
+import { serviceFAQ } from '@/lib/faq-data';
+import FAQ from '@/app/components/FAQ';
+import Breadcrumbs from '@/app/components/Breadcrumbs';
 
 // Импортируем данные о городах, чтобы использовать телефоны
 const cityData = {
@@ -32,24 +35,6 @@ export default function ServicePage({ params }: ServicePageProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { slug } = use(params);
   const service = services.find((s) => s.slug === slug);
-
-  // Добавляем динамический заголовок и описание для SEO
-  useEffect(() => {
-    if (service) {
-      document.title = `${service.title} | ЦКЭ Проект`;
-      const metaDescription = document.querySelector(
-        'meta[name="description"]'
-      );
-      if (metaDescription) {
-        metaDescription.setAttribute('content', service.description);
-      } else {
-        const meta = document.createElement('meta');
-        meta.name = 'description';
-        meta.content = service.description;
-        document.head.appendChild(meta);
-      }
-    }
-  }, [service]);
 
   if (!service) {
     return <div>Услуга не найдена</div>;
@@ -77,8 +62,9 @@ export default function ServicePage({ params }: ServicePageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-20">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gray-50">
+      <Breadcrumbs />
+      <div className="container mx-auto px-4 pb-20 pt-8">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -340,6 +326,13 @@ export default function ServicePage({ params }: ServicePageProps) {
               </div>
             </div>
           </motion.div>
+
+          {/* FAQ секция */}
+          {serviceFAQ[slug] && (
+            <motion.div variants={itemVariants}>
+              <FAQ items={serviceFAQ[slug]} />
+            </motion.div>
+          )}
 
           {/* Призыв к действию */}
           <motion.div
